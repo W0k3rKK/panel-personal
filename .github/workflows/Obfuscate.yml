@@ -1,6 +1,7 @@
 name: Build Obfuscate BPB Panel
 
 on:
+  workflow_dispatch: 
   push:
     branches:
       - main
@@ -28,9 +29,18 @@ jobs:
         run: |
           npm install -g javascript-obfuscator
 
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq     
+
       - name: Clone BPB workjs
         run: |
-          wget -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/main/build/unobfuscated-worker.js
+          RESPONSE=$(curl -s https://api.github.com/repos/bia-pain-bache/BPB-Worker-Panel/releases/latest)
+          DOWNLOAD_URL=$(echo $RESPONSE | jq -r '.assets[] | select(.name == "worker.js") | .browser_download_url')
+          echo "DOWNLOAD_URL=$DOWNLOAD_URL" >> $GITHUB_ENV
+          echo "Found browser_download_url: $DOWNLOAD_URL"
+          wget -O origin.js $DOWNLOAD_URL
       
       - name: Obfuscate BPB worker js
         run: |
